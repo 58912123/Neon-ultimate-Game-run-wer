@@ -37,3 +37,5 @@ Now, go have fun and try to be the best!
 Thanks for playing NEON DASH!
 
 ⚡ RUN FAST. JUMP HIGH. BEAT YOUR BEST. ⚡
+
+game link: https://58912123.github.io/Neon-ultimate-Game-run-wer/ 
