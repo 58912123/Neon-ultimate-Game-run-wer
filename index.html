@@ -1,1 +1,175 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">     
+<title>NEON DASH</title>
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;background:#0800e1;color:white;
+    font-family:Arial,sans-serif;text-align:center;
+    padding:15px
+}   
+h1{letter-spacing:9px;color:#50edff;text-shadow:0 0 15px #00cfff}
+h1 span{color:#ff4fc8}
+.game{max-width:850px;margin:auto}
+canvas{width:100%;height:auto;background:#101c32;
+border:2px solid #3e91ad;border-radius:14px;
+box-shadow:0 0 25px #00cfff44}
+.stats{display:flex;justify-content:center;gap:25px;margin:12px}
+.stats b{color:#53f6ff}
+button{background:#123650;color:white;border:1px solid #4ed8f5;
+padding:11px 16px;border-radius:9px;margin:4px;cursor:pointer;font-weight:bold}
+button:hover{background:#176083}
+.panel{max-width:800px;margin:12px auto}
+#overlay{position:fixed;inset:0;background:#050b18dd;
+display:flex;align-items:center;justify-content:center;
+padding:20px}
+.dialog{background:#10233c;border:1px solid #5eeaff;
+border-radius:16px;padding:25px;max-width:400px}
+.dialog h2{color:#53f6ff;letter-spacing:3px}
+.dialog p{line-height:1.6;color:#c6d9ed}
+.hidden{display:none!important}
+.controls{display:flex;justify-content:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="game">
+<h1>NEON <span>DASH</span></h1>
+<p>RUN THE CITY. BEAT YOUR BEST.</p>
+<div class="stats">
+    <p>SCORE: <b id="score">0</b></p>
+    <p>BEST: <b id="best">0</b></p>
+</div>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
+<div class="controls">
+     <button onclick="jump()">JUMP</button>
+    <button onclick="restart()">RESTART</button>
+</div>
+
+<div class="panel">
+    Press SPACE, UP ARROW, or JUMP to avoid the blocks!
+</div>
+</div>
+
+<div id="overlay">
+    <div class="dialog">
+        <h2 id="message">NEON DASH</h2>
+        <p id="description">Ready to run? Dodge the obstacles and get the highest score!</p>
+        <button onclick="restart()">START GAME</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let player, blocks, score, speed, playing;
+let best = Number(localStorage.getItem("neonBest")) || 0;
+
+document.getElementById("best").textContent = best;
+
+function restart(){
+    player = {x:80,y:265,w:35,h:35,vy:0};
+    blocks = [];
+    score = 0;
+    speed = 5;
+    playing = true;
+    document.getElementById("overlay").classList.add("hidden");
+    loop();
+}
+
+function jump(){
+    if(playing && player.y >= 265){
+        player.vy = -13;
+    }
+}
+
+document.addEventListener("keydown",e=>{
+    if(e.code === "Space" || e.code === "ArrowUp"){
+        e.preventDefault();
+        jump();
+    }
+});
+
+function loop(){
+    if(!playing) return;
+
+    ctx.clearRect(0,0,800,350);
+
+    // Ground
+    ctx.fillStyle = "#203b5c";
+    ctx.fillRect(0,300,800,50);
+
+    // Ground glow
+    ctx.fillStyle = "#00eaff";
+    ctx.fillRect(0,300,800,3);
+
+    // Player
+    player.vy += 0.7;
+    player.y += player.vy;
+    if(player.y > 265){
+        player.y = 265;
+        player.vy = 0;
+    }
+
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "#00eaff";
+    ctx.fillStyle = "#50edff";
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+    ctx.shadowBlur = 0;
+
+    // Obstacles
+    if(Math.random() < 0.018){
+        blocks.push({x:800,y:260,w:30,h:40});
+    }
+
+    blocks.forEach(b=>{
+        b.x -= speed;
+        ctx.fillStyle = "#ff4fc8";
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ff4fc8";
+        ctx.fillRect(b.x,b.y,b.w,b.h);
+        ctx.shadowBlur = 0;
+
+        if(player.x < b.x+b.w &&
+           player.x+player.w > b.x &&
+           player.y < b.y+b.h &&
+           player.y+player.h > b.y){
+            gameOver();
+        }
+    });
+
+    blocks = blocks.filter(b=>b.x > -40);
+
+    score++;
+    speed += 0.001;
+
+    document.getElementById("score").textContent =
+        Math.floor(score/5);
+
+    requestAnimationFrame(loop);
+}
+
+function gameOver(){
+    playing = false;
+
+    let finalScore = Math.floor(score/5);
+
+    if(finalScore > best){
+        best = finalScore;
+        localStorage.setItem("neonBest",best);
+        document.getElementById("best").textContent = best;
+    }
+
+    document.getElementById("message").textContent = "GAME OVER!";
+    document.getElementById("description").textContent =
+        "Your score: " + finalScore + " — Can you beat your best?";
+    document.getElementById("overlay").classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
